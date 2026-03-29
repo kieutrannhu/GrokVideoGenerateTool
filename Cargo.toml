@@ -1,0 +1,3 @@
+[workspace]
+members = ["grok-video-sdk", "grok-video-app/src-tauri"]
+resolver = "2"

@@ -1,0 +1,40 @@
+Phase,Task ID,Task,Chi tiet,Role,Ngay,Thoi luong (h),Trang thai,Ghi chu
+Phase 1: SDK Setup,1.1,Build GrokVideoSdk.dll (net48),"dotnet build -c Release, lay DLL tu bin/Release/net48/",Dev,Day 1,0.5,Done,
+Phase 1: SDK Setup,1.2,Copy DLL vao EasyClip repo,"Tao folder libs/ trong EasyClip, copy GrokVideoSdk.dll (Newtonsoft.Json da co san trong EasyClip)",Dev,Day 1,0.25,Done,Khong can copy Newtonsoft.Json
+Phase 1: SDK Setup,1.3,Them Reference vao ReviewMovie.csproj,"Them <Reference Include=""GrokVideoSdk""> voi HintPath libs\GrokVideoSdk.dll",Dev,Day 1,0.25,Done,
+Phase 1: SDK Setup,1.4,Build kiem tra - khong loi compile,"Can build tren Windows voi Visual Studio (.NET Framework 4.8)",Dev,Day 1,0.25,Blocked,macOS khong co .NET Framework 4.8 SDK
+Phase 2: Data Layer,2.1,Them 4 fields Grok vao ConfigModel.cs,"GrokEnabled (bool), GrokApiKey (string), GrokDuration (int=5), GrokAspectRatio (string=""16:9"")",Dev,Day 1,0.25,Done,Vuot plan: them Duration + AspectRatio
+Phase 2: Data Layer,2.2,Cap nhat ConfigDataService.cs,"Them UpdateGrokConfig(bool enabled, string apiKey, int duration, string aspectRatio) + interface method",Dev,Day 1,0.5,Done,Save 4 fields vao LiteDB
+Phase 2: Data Layer,2.3,Tao GrokVideoContextModel.cs,"2 class: GrokVideoContextModel (batch config + callbacks) + GrokVideoRowInput (RowIndex, ImagePath, DialogueText)",Dev,Day 1,0.5,Done,Redesign cho batch flow
+Phase 3: Service,3.1,Tao GrokVideoService.cs - khung class,"DefaultPromptTemplate, MaxConcurrent=2, PollIntervalSeconds=5, TimeoutMinutes=10, MaxImageSizeBytes=5MB",Dev,Day 1,0.5,Done,
+Phase 3: Service,3.2,Code GenerateSingleAsync,"Validate -> Check image size -> Build prompt -> Submit -> Poll 5s -> Download -> Update cells",Dev,Day 1,1.5,Done,
+Phase 3: Service,3.3,Code GenerateBatchAsync,"SemaphoreSlim(2), Task.Run per row, Interlocked counters, batch progress, Task.WhenAll",Dev,Day 1,1.5,Done,
+Phase 3: Service,3.4,Error handling trong Service,"MapGrokError 8 error types, try/catch per row khong anh huong row khac, acquired flag cho semaphore, wrap Task.WhenAll cancel",Dev,Day 1,0.5,Done,Da fix 2 bugs: semaphore leak + WhenAll crash
+Phase 3: Service,3.5,Unit test GrokClient,"25 tests: MockHttpHandler, happy path (7), error cases (8), timeout (1), retry (2), cancellation (2), logging (1), constructor (3), builder (1)",Dev,Day 1,1,Done,Test o SDK level (mock HTTP) + fix bug InvalidResponse
+Phase 3: Service,3.6,Fix bug SDK - InvalidResponse,"JsonReaderException khong duoc wrap thanh GrokException. Da fix: try/catch DeserializeObject trong SubmitJobAsync + CheckStatusAsync",Dev,Day 1,0.25,Done,Bug phat hien tu unit test
+Day 1 Buffer,--,Buffer/Debug Day 1,"Xu ly loi phat sinh, debug compile issues",Dev,Day 1,0.5,Done,
+Phase 4: Localization,4.1,Them 19 LangKeys vao LangKeys.cs,"Grok_GenerateVideo, Grok_EnableFeature, Grok_Submitting, Grok_Processing, ... Grok_TaskName, Grok_SaveSuccess",Dev,Day 2,0.25,Done,19 keys (vuot plan 17)
+Phase 4: Localization,4.2,Them ban dich Lang_vi.cs,"19 entries tieng Viet",Dev,Day 2,0.25,Done,
+Phase 4: Localization,4.3,Them ban dich Lang_en.cs,"19 entries tieng Anh",Dev,Day 2,0.25,Done,
+Phase 5: UI - Settings,5.1,Them GroupBox grbConfigGrok vao Designer,"GroupBox 'Grok AI Video' panel PHAI (scSetting), Y=797, mau tim #7C3AED, border #C4B5FD",Dev,Day 2,0.5,Done,Panel PHAI khong phai trai
+Phase 5: UI - Settings,5.2,Them CheckBox chkEnableGrok,"Toggle bat/tat, wire CheckedChanged -> disable/enable controls + an/hien menu",Dev,Day 2,0.25,Done,
+Phase 5: UI - Settings,5.3,Them txtGrokApiKey + btnSaveGrokKey,"UiTextBox UseSystemPasswordChar + UiButton Save, wire Click -> UpdateGrokConfig",Dev,Day 2,0.5,Done,
+Phase 5: UI - Settings,5.4,Them cbGrokDuration + cbGrokAspectRatio,"ComboBox duration (5s) + aspect ratio (16:9/9:16/1:1/4:3/3:4)",Dev,Day 2,0.25,Done,Them so voi plan goc
+Phase 5: UI - Settings,5.5,Load/Save Grok config khi mo/dong app,"LoadGrokConfig() goi tu form init, btnSaveGrokKey_Click goi UpdateGrokConfig",Dev,Day 2,0.5,Done,
+Phase 5: UI - Menu,5.6,Them context menu items vao ctMenu,"MenuItemGrokVideo + GrokVideoAll (Chon Het) + GrokVideoSelected (Chon Nhom)",Dev,Day 2,0.5,Done,Dung naming convention app
+Phase 5: UI - Menu,5.7,Toggle hien/an menu theo chkEnableGrok,"MenuItemGrokVideo.Visible = chkEnableGrok.Checked",Dev,Day 2,0.25,Done,
+Phase 5: UI - Handler,5.8,Code handler GrokVideoAll_Click + GrokVideoSelected_Click,"Thu thap rows (all/checked), build GrokVideoContextModel, goi GenerateBatchAsync",Dev,Day 2,1,Done,Dung 1 method RunGrokBatchAsync(bool selectedOnly)
+Phase 5: UI - Handler,5.9,Them _grokCTS va dang ky cancel,"CancellationTokenSource, _isGrokRunning flag, dang ky vao CheckAndCancelAllRunningTasksAsync",Dev,Day 2,0.25,Done,
+Phase 5: UI - Handler,5.10,Cap nhat ApplyLanguage() cho Grok controls,"MenuItemGrokVideo, GrokVideoAll, GrokVideoSelected, chkEnableGrok",Dev,Day 2,0.25,Done,
+Phase 5: UI - Progress,5.11,Hien thi progress len lblstatus + grid cells,"UpdateCellCallback -> Column_renderstatus (per row), SetStatusCallback -> lblstatus (batch)",Dev,Day 2,0.5,Done,Invoke() cho thread safety
+Phase 5: UI - Output,5.12,Gan video output vao InfoRenderVd.MediaPath,"Sau batch xong: doc Column_filemediapath, cap nhat _allInfoRender[].MediaPath + MediaFilePath",Dev,Day 2,0.5,Done,
+Day 2 Buffer,--,Buffer/Debug Day 2,"Debug UI layout, xu ly loi event wiring",Dev,Day 2,0.75,Todo,Can test tren Windows
+Phase 6: Integration Test,6.1,Test single row: anh + text -> gen video,"1 row co anh + loi thoai, click Generate Selected, kiem tra video output",BA/Dev,Day 3,1,Todo,
+Phase 6: Integration Test,6.2,Test batch: 5 rows parallel,"Chon 5 rows, click Generate All, kiem tra parallel + progress",BA/Dev,Day 3,1,Todo,
+Phase 6: Integration Test,6.3,Test toggle bat/tat Grok,"Tat checkbox -> menu an, bat -> menu hien, API key luu dung",BA/Dev,Day 3,0.5,Todo,
+Phase 6: Integration Test,6.4,Test cancel giua chung,"Dang gen batch -> click Cancel All -> kiem tra jobs dung lai",BA/Dev,Day 3,0.5,Todo,
+Phase 6: Integration Test,6.5,Test error cases,"API key sai -> 'Invalid API key', network off -> 'Network error', row thieu anh -> skip",BA/Dev,Day 3,1,Todo,
+Phase 6: Integration Test,6.6,Test full pipeline end-to-end,"Grok video -> TTS audio -> FFmpeg render segment -> Merge -> final MP4",BA/Dev,Day 3,1.5,Todo,QUAN TRONG NHAT
+Phase 6: Polish,6.7,Fix bugs tu testing,"Sua loi phat sinh tu 6.1-6.6",Dev,Day 3,1.5,Todo,
+Phase 6: Polish,6.8,Review code + cleanup,"Xoa code thua, kiem tra memory leak (dispose GrokClient), kiem tra thread safety",Dev,Day 3,0.5,Todo,
+Phase 6: Polish,6.9,Cap nhat CLAUDE.md + documentation,"Cap nhat CLAUDE.md voi thong tin Grok integration, ghi chu cho dev sau",Dev,Day 3,0.5,Todo,

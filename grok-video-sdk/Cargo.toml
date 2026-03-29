@@ -1,0 +1,14 @@
+[package]
+name = "grok-video-sdk"
+version = "0.1.0"
+edition = "2021"
+description = "Rust SDK for xAI Grok Imagine Video API"
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["fs", "io-util"] }
+futures-util = "0.3"
+base64 = "0.22"

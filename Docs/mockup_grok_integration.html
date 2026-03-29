@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyClip - Grok AI Video Integration Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #212529; display: flex; justify-content: center; padding: 20px; }
+
+  .app-frame {
+    width: 1491px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    height: 46px;
+    background: linear-gradient(135deg, #d26900, #e67e22);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+  .header-brand {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-logo {
+    width: 30px; height: 30px; background: #fff; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; color: #d26900; font-size: 14px;
+  }
+  .header-title {
+    color: #fff; font-size: 15px; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .header-close {
+    width: 32px; height: 32px; background: rgba(255,255,255,0.15);
+    border: none; border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer;
+  }
+  .header-close:hover { background: #c0392b; }
+
+  /* ===== MAIN LAYOUT ===== */
+  .main-layout {
+    display: flex;
+    height: 810px;
+  }
+
+  /* ===== LEFT PANEL ===== */
+  .left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff8f0;
+  }
+
+  /* --- Input Header --- */
+  .input-header {
+    display: flex;
+    height: 200px;
+    border-bottom: 2px solid #fde2c8;
+    background: #ffedd5;
+  }
+  .input-col {
+    display: flex;
+    flex-direction: column;
+  }
+  .input-col-mic { width: 116px; }
+  .input-col-text { flex: 1; }
+  .input-col-media { width: 215px; }
+  .input-col-action { width: 174px; }
+
+  .input-col-header {
+    background: #3184d6;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .input-col-body {
+    flex: 1;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-record {
+    flex: 1;
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-record::before { content: "🎙"; font-size: 24px; }
+
+  .text-input-area {
+    flex: 1;
+    border: 2px solid #dde4ee;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+    resize: none;
+    background: #fff;
+    color: #333;
+  }
+  .text-input-area:focus { border-color: #4f2dcc; outline: none; }
+
+  .media-drop {
+    flex: 1;
+    border: 2px dashed #ccc;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #999;
+    text-align: center;
+    background: #fff;
+  }
+
+  .action-btn {
+    flex: 1;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+  }
+  .btn-convert { background: linear-gradient(135deg, #3498db, #2980b9); }
+  .btn-save-audio { background: linear-gradient(135deg, #27ae60, #219a52); }
+  .btn-render { background: linear-gradient(135deg, #e67e22, #d35400); }
+
+  /* --- Toolbar --- */
+  .toolbar {
+    height: 32px;
+    background: #cbd8e9;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+    border-bottom: 1px solid #b8c8db;
+  }
+  .toolbar-btn {
+    padding: 3px 10px;
+    border: 1px solid #a0b0c0;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    background: #fff;
+    white-space: nowrap;
+  }
+  .toolbar-btn.green { background: #80ff80; border-color: #60d060; }
+  .toolbar-btn.yellow { background: #ffffc0; border-color: #e0e060; }
+  .toolbar-btn.orange { background: #ffe0c0; border-color: #e0a060; }
+  .toolbar-search {
+    width: 140px;
+    padding: 3px 8px;
+    border: 1px solid #a0b0c0;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  .toolbar-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #006400;
+    margin-left: 4px;
+  }
+
+  /* --- DataGridView --- */
+  .datagrid-wrapper {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+  }
+  .datagrid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .datagrid thead th {
+    background: #e67e22;
+    color: #fff;
+    font-weight: 600;
+    padding: 6px 8px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-right: 1px solid #d35400;
+    white-space: nowrap;
+  }
+  .datagrid tbody td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #f0e8e0;
+    background: #fcfeff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+  .datagrid tbody tr:hover td { background: #fff3e0; }
+  .datagrid tbody tr.selected td { background: #ffb74d; color: #fff; }
+  .datagrid input[type="checkbox"] { accent-color: #e67e22; }
+
+  .status-pending { color: #f39c12; font-weight: 600; }
+  .status-done { color: #27ae60; font-weight: 600; }
+  .status-processing { color: #3498db; font-weight: 600; }
+  .status-failed { color: #e74c3c; font-weight: 600; }
+  .status-grok { color: #8b5cf6; font-weight: 600; }
+
+  /* --- Context Menu --- */
+  .context-menu {
+    position: absolute;
+    top: 180px;
+    left: 340px;
+    background: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    z-index: 100;
+    min-width: 300px;
+    padding: 4px 0;
+    font-size: 12px;
+  }
+  .ctx-item {
+    padding: 7px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ctx-item:hover { background: #fff3e0; }
+  .ctx-separator { height: 1px; background: #e8e8e8; margin: 4px 0; }
+  .ctx-sub {
+    padding: 5px 16px 5px 36px;
+    font-size: 11px;
+    color: #666;
+    cursor: pointer;
+  }
+  .ctx-sub:hover { background: #fff3e0; color: #333; }
+  .ctx-icon { width: 18px; text-align: center; font-size: 13px; }
+
+  .ctx-new {
+    background: linear-gradient(90deg, #f3e8ff, #fff);
+    border-left: 3px solid #8b5cf6;
+  }
+  .ctx-new:hover { background: linear-gradient(90deg, #ede2fe, #faf5ff); }
+  .ctx-new-badge {
+    font-size: 9px;
+    background: #8b5cf6;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: auto;
+    font-weight: 600;
+  }
+
+  /* ===== RIGHT PANEL ===== */
+  .right-panel {
+    width: 420px;
+    background: #fff3e0;
+    border-left: 2px solid #fde2c8;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .collapse-bar {
+    height: 27px;
+    background: #e8d5c0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 11px;
+    color: #666;
+    gap: 4px;
+  }
+
+  .settings-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* --- GroupBox --- */
+  .groupbox {
+    border: 2px solid #ffc896;
+    border-radius: 10px;
+    background: #fff;
+    position: relative;
+    padding: 12px 12px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .groupbox-title {
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: #f39c12;
+    border-radius: 8px 8px 0 0;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .groupbox-body {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .groupbox.teal .groupbox-title { background: #009688; }
+  .groupbox.teal { border-color: #96dcd2; }
+
+  .groupbox.grok .groupbox-title { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+  .groupbox.grok { border-color: #c4b5fd; box-shadow: 0 2px 12px rgba(139,92,246,0.15); }
+
+  /* --- Form Controls --- */
+  .form-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .form-label {
+    font-size: 11px;
+    color: #555;
+    min-width: 70px;
+    text-align: right;
+  }
+  .form-input {
+    flex: 1;
+    height: 26px;
+    border: 1.5px solid #dde4ee;
+    border-radius: 5px;
+    padding: 0 8px;
+    font-size: 11px;
+    background: #fff;
+  }
+  .form-input:focus { border-color: #4f2dcc; outline: none; }
+  .form-input.password { letter-spacing: 3px; }
+  .form-select {
+    flex: 1;
+    height: 26px;
+    border: 1.5px solid #dde4ee;
+    border-radius: 5px;
+    padding: 0 6px;
+    font-size: 11px;
+    background: #fff;
+  }
+  .form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .form-checkbox input { accent-color: #8b5cf6; width: 15px; height: 15px; }
+
+  .btn-small {
+    height: 26px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .btn-orange { background: #e67e22; }
+  .btn-orange:hover { background: #d35400; }
+  .btn-purple { background: #8b5cf6; }
+  .btn-purple:hover { background: #7c3aed; }
+  .btn-teal { background: #009688; }
+
+  .radio-group {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+  }
+  .radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  /* --- Status Bar --- */
+  .status-bar {
+    padding: 6px 12px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-bar .status-text { color: #8b5cf6; font-weight: 600; }
+  .status-bar .status-dot {
+    width: 8px; height: 8px; background: #8b5cf6;
+    border-radius: 50%; animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* --- NEW Feature Highlight --- */
+  .new-badge {
+    font-size: 9px;
+    background: #8b5cf6;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    animation: glow 2s ease-in-out infinite;
+  }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 4px rgba(139,92,246,0.4); }
+    50% { box-shadow: 0 0 12px rgba(139,92,246,0.8); }
+  }
+
+  /* --- Annotations --- */
+  .annotation {
+    position: absolute;
+    font-size: 11px;
+    color: #8b5cf6;
+    font-weight: 600;
+    pointer-events: none;
+  }
+  .annotation-arrow {
+    border: 2px dashed #8b5cf6;
+    position: absolute;
+  }
+  .callout {
+    background: #f5f0ff;
+    border: 2px solid #8b5cf6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #5b21b6;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .callout-icon { font-size: 16px; }
+
+  /* Legend */
+  .legend {
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border-top: 2px solid #e8e8e8;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .legend-title { font-size: 13px; font-weight: 700; color: #333; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #555;
+  }
+  .legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f0e8e0; }
+  ::-webkit-scrollbar-thumb { background: #d0c0b0; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div>
+  <!-- Title -->
+  <div style="text-align:center; margin-bottom:16px;">
+    <h1 style="color:#fff; font-size:22px; font-weight:700;">
+      EasyClip WinForms — Grok AI Video Integration Mockup
+    </h1>
+    <p style="color:#aaa; font-size:13px;">
+      Phan tim (<span style="color:#8b5cf6;">purple</span>) = tinh nang moi duoc tich hop
+    </p>
+  </div>
+
+  <!-- App Frame -->
+  <div class="app-frame">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-brand">
+        <div class="header-logo">EC</div>
+        <span class="header-title">EasyClip - Render Video Tools</span>
+      </div>
+      <button class="header-close">✕</button>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-layout">
+
+      <!-- ===== LEFT PANEL ===== -->
+      <div class="left-panel">
+
+        <!-- Input Header -->
+        <div class="input-header">
+          <div class="input-col input-col-mic">
+            <div class="input-col-header">Mic In</div>
+            <div class="input-col-body">
+              <button class="btn-record">REC</button>
+            </div>
+          </div>
+          <div class="input-col input-col-text">
+            <div class="input-col-header">Nhap Text | Hoac Keo Audio File Vao !</div>
+            <div class="input-col-body">
+              <textarea class="text-input-area" placeholder="Nhap loi thoai tai day...">Xin chào, tôi là trợ lý AI. Hôm nay tôi sẽ giới thiệu về sản phẩm mới của chúng tôi.</textarea>
+            </div>
+          </div>
+          <div class="input-col input-col-media">
+            <div class="input-col-header">Keo Tha (Anh, Video)</div>
+            <div class="input-col-body">
+              <div class="media-drop">
+                📁 Keo tha file<br>anh/video vao day
+              </div>
+            </div>
+          </div>
+          <div class="input-col input-col-action">
+            <div class="input-col-header">Tac Vu</div>
+            <div class="input-col-body">
+              <button class="action-btn btn-convert">Convert Audio</button>
+              <button class="action-btn btn-save-audio">Save Audio</button>
+              <button class="action-btn btn-render">Render Video</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <button class="toolbar-btn">🔍</button>
+          <input class="toolbar-search" placeholder="Tim kiem...">
+          <button class="toolbar-btn">☑ All</button>
+          <span class="toolbar-label">Chon Tac Vu</span>
+          <button class="toolbar-btn green">+ Them Dong</button>
+          <button class="toolbar-btn yellow">Nhap Subtitle</button>
+          <button class="toolbar-btn" style="background:#c0ffc0;">Xuat Subtitle</button>
+          <button class="toolbar-btn orange">Huy Moi HD</button>
+        </div>
+
+        <!-- DataGridView with Context Menu -->
+        <div class="datagrid-wrapper" style="position:relative;">
+          <table class="datagrid">
+            <thead>
+              <tr>
+                <th style="width:50px;">☑</th>
+                <th style="width:40px;">No.</th>
+                <th style="width:55px;">Length</th>
+                <th style="width:80px;">Audio Link</th>
+                <th style="width:70px;">Audio Time</th>
+                <th style="width:80px;">Audio Status</th>
+                <th style="width:100px;">File Media</th>
+                <th style="width:70px;">Time Video</th>
+                <th style="width:110px;">Render Status</th>
+                <th>Input Text</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td>1</td>
+                <td>95</td>
+                <td style="color:#3498db;">audio_01.mp3</td>
+                <td>00:04.2</td>
+                <td class="status-done">Done ✓</td>
+                <td style="color:#3498db;">person_01.jpg</td>
+                <td>00:05.0</td>
+                <td class="status-grok">⚡ Grok: 67%</td>
+                <td>Xin chào, tôi là trợ lý AI...</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" checked></td>
+                <td>2</td>
+                <td>82</td>
+                <td style="color:#3498db;">audio_02.mp3</td>
+                <td>00:03.8</td>
+                <td class="status-done">Done ✓</td>
+                <td style="color:#3498db;">scene_02.png</td>
+                <td>00:05.0</td>
+                <td class="status-grok">⚡ Grok: Submitting...</td>
+                <td>Sản phẩm này được thiết kế...</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" checked></td>
+                <td>3</td>
+                <td>110</td>
+                <td style="color:#3498db;">audio_03.mp3</td>
+                <td>00:05.1</td>
+                <td class="status-done">Done ✓</td>
+                <td style="color:#3498db;">bg_03.jpg</td>
+                <td>00:05.0</td>
+                <td class="status-pending">Pending...</td>
+                <td>Với công nghệ AI tiên tiến nhất...</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>4</td>
+                <td>76</td>
+                <td style="color:#999;">—</td>
+                <td>—</td>
+                <td style="color:#999;">—</td>
+                <td style="color:#3498db;">char_04.webp</td>
+                <td>—</td>
+                <td style="color:#999;">—</td>
+                <td>Hãy trải nghiệm ngay hôm nay...</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>5</td>
+                <td>68</td>
+                <td style="color:#999;">—</td>
+                <td>—</td>
+                <td style="color:#999;">—</td>
+                <td style="color:#e74c3c;">No image</td>
+                <td>—</td>
+                <td class="status-failed">Grok: No image</td>
+                <td>Cảm ơn quý khách đã theo dõi</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>6</td>
+                <td>55</td>
+                <td style="color:#3498db;">audio_06.mp3</td>
+                <td>00:02.5</td>
+                <td class="status-done">Done ✓</td>
+                <td style="color:#3498db;">outro.png</td>
+                <td>00:05.0</td>
+                <td class="status-done">Grok: Done ✓</td>
+                <td>Đăng ký kênh để nhận thông báo</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>7</td>
+                <td>48</td>
+                <td style="color:#999;">—</td>
+                <td>—</td>
+                <td style="color:#999;">—</td>
+                <td style="color:#3498db;">slide_07.jpg</td>
+                <td>—</td>
+                <td style="color:#999;">—</td>
+                <td>Liên hệ hotline để được tư vấn</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>8</td>
+                <td>90</td>
+                <td style="color:#3498db;">audio_08.mp3</td>
+                <td>00:04.0</td>
+                <td class="status-done">Done ✓</td>
+                <td style="color:#3498db;">avatar.jpg</td>
+                <td>00:05.0</td>
+                <td style="color:#999;">—</td>
+                <td>Chúc quý khách một ngày tốt lành</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- ===== CONTEXT MENU (NEW) ===== -->
+          <div class="context-menu">
+            <div class="ctx-item">
+              <span class="ctx-icon">🔊</span>
+              Chuyen Doi Text → Voice
+            </div>
+            <div class="ctx-sub">Chon Het</div>
+            <div class="ctx-sub">Chon Nhom</div>
+            <div class="ctx-separator"></div>
+            <div class="ctx-item">
+              <span class="ctx-icon">📥</span>
+              Lay Audio Chuyen Doi
+            </div>
+            <div class="ctx-sub">Chon Het</div>
+            <div class="ctx-sub">Chon Nhom</div>
+            <div class="ctx-separator"></div>
+            <div class="ctx-item">
+              <span class="ctx-icon">🎬</span>
+              Tao Doan Video Tu Media, Audio
+            </div>
+            <div class="ctx-sub">Chon Het</div>
+            <div class="ctx-sub">Chon Nhom</div>
+            <div class="ctx-separator"></div>
+
+            <!-- NEW GROK ITEMS -->
+            <div class="ctx-item ctx-new">
+              <span class="ctx-icon">⚡</span>
+              <strong>Tao Video AI (Grok)</strong>
+              <span class="ctx-new-badge">NEW</span>
+            </div>
+            <div class="ctx-sub ctx-new" style="border-left:3px solid #8b5cf6; background:linear-gradient(90deg,#f9f5ff,#fff);">
+              ⚡ Chon Het (All)
+            </div>
+            <div class="ctx-sub ctx-new" style="border-left:3px solid #8b5cf6; background:linear-gradient(90deg,#f9f5ff,#fff);">
+              ⚡ Chon Nhom (Selected)
+            </div>
+
+            <div class="ctx-separator"></div>
+            <div class="ctx-item">
+              <span class="ctx-icon">🔄</span>
+              Reload Time Video Nhap
+            </div>
+            <div class="ctx-separator"></div>
+            <div class="ctx-item" style="color:#e74c3c;">
+              <span class="ctx-icon">🗑</span>
+              Xoa Dong
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar" style="border-top:1px solid #e8e0d8; background:#fff8f0;">
+          <span class="status-dot"></span>
+          <span class="status-text">⚡ Grok: 1/3 completed — Dang xu ly row #1 (67%)...</span>
+        </div>
+
+      </div>
+
+      <!-- ===== RIGHT PANEL ===== -->
+      <div class="right-panel">
+        <div class="collapse-bar">◀ Thu Gon</div>
+
+        <div class="settings-scroll">
+
+          <!-- GroupBox: Voice Config -->
+          <div class="groupbox">
+            <div class="groupbox-title">🔊 Cai Dat Voice</div>
+            <div class="groupbox-body">
+              <div class="form-row">
+                <span class="form-label">Nguon:</span>
+                <select class="form-select">
+                  <option>T2Psoft</option>
+                  <option>GoogleTTS</option>
+                  <option>ElevenLabs</option>
+                  <option>Vbee</option>
+                  <option>FptAI</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <span class="form-label">API Key:</span>
+                <input class="form-input" type="text" placeholder="Nhap API key...">
+              </div>
+              <div class="form-row">
+                <span class="form-label">Token:</span>
+                <input class="form-input" type="text" placeholder="Nhap token...">
+              </div>
+              <div class="form-row" style="justify-content:flex-end;">
+                <button class="btn-small btn-orange">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GroupBox: Effect Config -->
+          <div class="groupbox">
+            <div class="groupbox-title">🎨 Lua Chon Hieu Ung</div>
+            <div class="groupbox-body">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                <div class="form-row">
+                  <span class="form-label" style="min-width:55px;">Zoom%:</span>
+                  <select class="form-select"><option>120%</option></select>
+                </div>
+                <div class="form-row">
+                  <span class="form-label" style="min-width:55px;">FPS:</span>
+                  <input class="form-input" value="30" style="width:50px;">
+                </div>
+                <div class="form-row">
+                  <span class="form-label" style="min-width:55px;">Quality:</span>
+                  <select class="form-select"><option>1080p</option></select>
+                </div>
+                <div class="form-row">
+                  <span class="form-label" style="min-width:55px;">Threads:</span>
+                  <input class="form-input" value="4" style="width:50px;">
+                </div>
+                <div class="form-row">
+                  <span class="form-label" style="min-width:55px;">Mode:</span>
+                  <select class="form-select"><option>Picture</option><option>Video</option></select>
+                </div>
+                <div class="form-row">
+                  <span class="form-label" style="min-width:55px;">Effect:</span>
+                  <select class="form-select"><option>Zoom In</option></select>
+                </div>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+                <label class="form-checkbox"><input type="checkbox" checked> Zoom</label>
+                <label class="form-checkbox"><input type="checkbox"> Rotate</label>
+                <label class="form-checkbox"><input type="checkbox"> Flip</label>
+                <label class="form-checkbox"><input type="checkbox"> Random Move</label>
+              </div>
+              <div class="form-row" style="justify-content:flex-end; margin-top:2px;">
+                <button class="btn-small btn-orange">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== NEW: GroupBox Grok AI Video ===== -->
+          <div class="groupbox grok">
+            <div class="groupbox-title">
+              ⚡ Grok AI Video
+              <span class="new-badge">NEW</span>
+            </div>
+            <div class="groupbox-body">
+
+              <div class="callout">
+                <span class="callout-icon">💡</span>
+                <span>Tao video AI tu anh + loi thoai bang xAI Grok Imagine Video API</span>
+              </div>
+
+              <label class="form-checkbox" style="font-size:12px; font-weight:600; color:#5b21b6;">
+                <input type="checkbox" checked>
+                Bat tinh nang Grok AI Video
+              </label>
+
+              <div class="form-row">
+                <span class="form-label" style="color:#5b21b6;">API Key:</span>
+                <input class="form-input password" type="password" value="xai-abcdef123456" style="border-color:#c4b5fd;">
+              </div>
+
+              <div class="form-row">
+                <span class="form-label" style="color:#5b21b6;">Prompt:</span>
+                <select class="form-select" style="border-color:#c4b5fd;">
+                  <option>Default: "Make character say..."</option>
+                  <option>Custom template</option>
+                </select>
+              </div>
+
+              <div class="form-row" style="justify-content:flex-end; gap:8px;">
+                <button class="btn-small btn-purple">Save</button>
+              </div>
+
+              <!-- Status khi dang chay -->
+              <div style="margin-top:4px; padding:6px 10px; background:#f5f0ff; border-radius:6px; border:1px solid #e0d5f5;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                  <span style="font-size:11px; font-weight:600; color:#5b21b6;">Batch Progress</span>
+                  <span style="font-size:11px; color:#7c3aed; font-weight:600;">1 / 3</span>
+                </div>
+                <div style="height:6px; background:#e8e0f0; border-radius:3px; overflow:hidden;">
+                  <div style="width:33%; height:100%; background:linear-gradient(90deg,#8b5cf6,#a78bfa); border-radius:3px; transition:width 0.3s;"></div>
+                </div>
+                <div style="font-size:10px; color:#888; margin-top:3px;">
+                  Row #1: Processing 67% | Row #2: Submitting... | Row #3: Pending
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- GroupBox: Publish -->
+          <div class="groupbox teal">
+            <div class="groupbox-title">📤 Xuat Ban Video</div>
+            <div class="groupbox-body">
+              <div class="radio-group">
+                <label><input type="radio" name="hw"> Use CPU</label>
+                <label><input type="radio" name="hw" checked> Use GPU</label>
+              </div>
+              <button class="btn-small btn-teal" style="width:100%; height:34px; font-size:13px; margin-top:4px;">
+                Merge & Export Video
+              </button>
+              <div style="font-size:11px; color:#009688; font-weight:600; margin-top:4px; text-align:center;">
+                Ready
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <span class="legend-title">Chu thich:</span>
+      <div class="legend-item">
+        <div class="legend-color" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);"></div>
+        Tinh nang moi: Grok AI Video
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#e67e22;"></div>
+        Tinh nang hien co (Voice, Render, Effects)
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#009688;"></div>
+        Export/Merge video
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#3184d6;"></div>
+        Input areas
+      </div>
+      <div class="legend-item" style="margin-left:auto; font-size:10px; color:#999;">
+        * Context menu: Right-click tren DataGridView de thay menu Grok
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Flow Diagram -->
+  <div style="margin-top:20px; background:#fff; border-radius:8px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+    <h3 style="font-size:15px; font-weight:700; margin-bottom:12px; color:#333;">
+      Luong xu ly: Grok AI Video trong pipeline EasyClip
+    </h3>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px;">
+
+      <div style="padding:8px 14px; background:#fff3e0; border:2px solid #e67e22; border-radius:8px; font-weight:600;">
+        1. Nhap Text<br><span style="font-size:10px; color:#888;">Loi thoai / Script</span>
+      </div>
+      <span style="font-size:18px; color:#999;">→</span>
+
+      <div style="padding:8px 14px; background:#fff3e0; border:2px solid #e67e22; border-radius:8px; font-weight:600;">
+        2. Chon Anh<br><span style="font-size:10px; color:#888;">Keo tha / Browse</span>
+      </div>
+      <span style="font-size:18px; color:#999;">→</span>
+
+      <div style="padding:8px 14px; background:#f5f0ff; border:2px solid #8b5cf6; border-radius:8px; font-weight:600; color:#5b21b6;">
+        3. Grok AI Gen ⚡<br><span style="font-size:10px; color:#8b5cf6;">Submit → Poll → Download</span>
+      </div>
+      <span style="font-size:18px; color:#999;">→</span>
+
+      <div style="padding:8px 14px; background:#fff3e0; border:2px solid #e67e22; border-radius:8px; font-weight:600;">
+        4. TTS Audio<br><span style="font-size:10px; color:#888;">Loi thoai → Voice</span>
+      </div>
+      <span style="font-size:18px; color:#999;">→</span>
+
+      <div style="padding:8px 14px; background:#fff3e0; border:2px solid #e67e22; border-radius:8px; font-weight:600;">
+        5. FFmpeg Render<br><span style="font-size:10px; color:#888;">Video + Audio + Effects</span>
+      </div>
+      <span style="font-size:18px; color:#999;">→</span>
+
+      <div style="padding:8px 14px; background:#e0f2f1; border:2px solid #009688; border-radius:8px; font-weight:600; color:#00796b;">
+        6. Merge & Export<br><span style="font-size:10px; color:#009688;">Final MP4</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
