@@ -15,11 +15,12 @@ const statusColors: Record<string, string> = {
 
 export default function JobCard({ job }: Props) {
   const colorClass = statusColors[job.status] || statusColors.pending;
+  const outputPath = job.task_type === "image" ? job.image_path : job.video_path;
 
   const openFolder = async () => {
-    if (job.video_path) {
+    if (outputPath) {
       try {
-        await revealItemInDir(job.video_path);
+        await revealItemInDir(outputPath);
       } catch (e) {
         console.error("Failed to open folder:", e);
       }
@@ -29,9 +30,14 @@ export default function JobCard({ job }: Props) {
   return (
     <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <p className="text-sm text-gray-200 line-clamp-2 flex-1">
-          {job.prompt}
-        </p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+              {job.task_type === "image" ? "Image" : "Video"}
+            </span>
+          </div>
+          <p className="text-sm text-gray-200 line-clamp-2">{job.prompt}</p>
+        </div>
         <span
           className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${colorClass}`}
         >
@@ -57,11 +63,9 @@ export default function JobCard({ job }: Props) {
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-2">
-        <span className="text-xs text-gray-500">
-          {job.id.substring(0, 8)}
-        </span>
+        <span className="text-xs text-gray-500">{job.id.substring(0, 8)}</span>
 
-        {job.status === "done" && job.video_path && (
+        {job.status === "done" && outputPath && (
           <button
             onClick={openFolder}
             className="text-xs text-blue-400 hover:text-blue-300 transition"

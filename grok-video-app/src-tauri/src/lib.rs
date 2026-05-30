@@ -3,7 +3,7 @@ mod state;
 
 use std::sync::Arc;
 
-use commands::{connect_api, create_video_task, get_jobs, get_output_dir};
+use commands::{connect_api, create_image_task, create_video_task, get_jobs, get_output_dir};
 use state::AppState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -19,6 +19,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             connect_api,
             create_video_task,
+            create_image_task,
             get_jobs,
             get_output_dir,
         ])

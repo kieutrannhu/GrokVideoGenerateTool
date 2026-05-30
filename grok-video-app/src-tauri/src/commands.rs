@@ -3,7 +3,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use grok_video_sdk::{
-    AspectRatio, GrokClient, JobStatus, Resolution, VideoGenerationRequest,
+    AspectRatio, GrokClient, ImageEditRequest, ImageGenerationRequest, JobStatus, Resolution,
+    VideoGenerationRequest,
 };
 use serde::Deserialize;
 use base64::Engine;
@@ -21,6 +22,15 @@ pub struct ConnectPayload {
 pub struct GeneratePayload {
     pub prompt: String,
     pub duration: Option<u8>,
+    pub aspect_ratio: Option<String>,
+    pub resolution: Option<String>,
+    pub image_path: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ImagePayload {
+    pub prompt: String,
+    pub count: Option<u8>,
     pub aspect_ratio: Option<String>,
     pub resolution: Option<String>,
     pub image_path: Option<String>,
@@ -50,7 +60,7 @@ pub async fn create_video_task(
     };
 
     let job_id = Uuid::new_v4().to_string();
-    let job = JobInfo::new(job_id.clone(), payload.prompt.clone());
+    let job = JobInfo::new(job_id.clone(), payload.prompt.clone(), "video");
 
     // Save job immediately so it shows in queue right away
     state.jobs.write().await.insert(job_id.clone(), job.clone());
@@ -130,6 +140,135 @@ pub async fn create_video_task(
                 if let Some(job) = jobs.get_mut(&job_id) {
                     job.status = "failed".to_string();
                     job.error = Some(format!("Submit failed: {e}"));
+                    let _ = app_handle.emit("job-update", &*job);
+                }
+            }
+        }
+    });
+
+    Ok(job)
+}
+
+#[tauri::command]
+pub async fn create_image_task(
+    app: AppHandle,
+    payload: ImagePayload,
+    state: State<'_, Arc<AppState>>,
+) -> Result<JobInfo, String> {
+    let client: GrokClient = {
+        let guard = state.client.read().await;
+        guard.clone().ok_or("API key not configured".to_string())?
+    };
+
+    let job_id = Uuid::new_v4().to_string();
+    let job = JobInfo::new(job_id.clone(), payload.prompt.clone(), "image");
+
+    state.jobs.write().await.insert(job_id.clone(), job.clone());
+
+    let state_inner = state.inner().clone();
+    let app_handle = app.clone();
+
+    tokio::spawn(async move {
+        // Choose endpoint: edits (img2img) when reference image provided, else generations
+        let api_result = if let Some(ref img_path) = payload.image_path {
+            match tokio::fs::read(img_path).await {
+                Ok(data) => {
+                    let filename = PathBuf::from(img_path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("image.png")
+                        .to_string();
+                    let edit_req = ImageEditRequest {
+                        prompt: payload.prompt.clone(),
+                        image_data: data,
+                        image_filename: filename,
+                        n: payload.count,
+                        aspect_ratio: payload.aspect_ratio.clone(),
+                        resolution: payload.resolution.clone(),
+                    };
+                    client.edit_image(edit_req).await
+                }
+                Err(e) => {
+                    let mut jobs = state_inner.jobs.write().await;
+                    if let Some(job) = jobs.get_mut(&job_id) {
+                        job.status = "failed".to_string();
+                        job.error = Some(format!("Failed to read image: {e}"));
+                        let _ = app_handle.emit("job-update", &*job);
+                    }
+                    return;
+                }
+            }
+        } else {
+            let mut request = ImageGenerationRequest::new(&payload.prompt);
+            if let Some(n) = payload.count {
+                request = request.count(n);
+            }
+            if let Some(ref ar) = payload.aspect_ratio {
+                request = request.aspect_ratio(ar);
+            }
+            if let Some(ref res) = payload.resolution {
+                request = request.resolution(res);
+            }
+            client.generate_image(&request).await
+        };
+
+        match api_result {
+            Ok(resp) => {
+                // Update status to downloading
+                {
+                    let mut jobs = state_inner.jobs.write().await;
+                    if let Some(job) = jobs.get_mut(&job_id) {
+                        job.status = "downloading".to_string();
+                        job.progress = 50;
+                        let _ = app_handle.emit("job-update", &*job);
+                    }
+                }
+
+                let image_output_dir = state_inner.image_output_dir.read().await.clone();
+                let dir = PathBuf::from(&image_output_dir);
+                let _ = tokio::fs::create_dir_all(&dir).await;
+
+                // Download first image (or all if count > 1)
+                let first_url = resp.data.into_iter().find_map(|img| img.url);
+                match first_url {
+                    Some(url) => {
+                        let filename = format!("{}.png", &job_id[..8]);
+                        let dest = dir.join(&filename);
+                        match client.download_image(&url, &dest).await {
+                            Ok(()) => {
+                                let mut jobs = state_inner.jobs.write().await;
+                                if let Some(job) = jobs.get_mut(&job_id) {
+                                    job.status = "done".to_string();
+                                    job.progress = 100;
+                                    job.image_path = Some(dest.to_string_lossy().to_string());
+                                    let _ = app_handle.emit("job-update", &*job);
+                                }
+                            }
+                            Err(e) => {
+                                let mut jobs = state_inner.jobs.write().await;
+                                if let Some(job) = jobs.get_mut(&job_id) {
+                                    job.status = "failed".to_string();
+                                    job.error = Some(format!("Download failed: {e}"));
+                                    let _ = app_handle.emit("job-update", &*job);
+                                }
+                            }
+                        }
+                    }
+                    None => {
+                        let mut jobs = state_inner.jobs.write().await;
+                        if let Some(job) = jobs.get_mut(&job_id) {
+                            job.status = "failed".to_string();
+                            job.error = Some("No image URL in response".to_string());
+                            let _ = app_handle.emit("job-update", &*job);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                let mut jobs = state_inner.jobs.write().await;
+                if let Some(job) = jobs.get_mut(&job_id) {
+                    job.status = "failed".to_string();
+                    job.error = Some(format!("Generation failed: {e}"));
                     let _ = app_handle.emit("job-update", &*job);
                 }
             }

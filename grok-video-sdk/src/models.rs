@@ -115,6 +115,74 @@ pub struct VideoData {
     pub duration: Option<f32>,
 }
 
+// ── Image generation types ──
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ImageGenerationRequest {
+    pub model: String,
+    pub prompt: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub n: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aspect_ratio: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<String>,
+}
+
+impl ImageGenerationRequest {
+    pub fn new(prompt: impl Into<String>) -> Self {
+        Self {
+            model: "grok-imagine-image-quality".to_string(),
+            prompt: prompt.into(),
+            n: None,
+            response_format: Some("url".to_string()),
+            aspect_ratio: None,
+            resolution: None,
+        }
+    }
+
+    pub fn count(mut self, n: u8) -> Self {
+        self.n = Some(n);
+        self
+    }
+
+    pub fn aspect_ratio(mut self, ratio: impl Into<String>) -> Self {
+        self.aspect_ratio = Some(ratio.into());
+        self
+    }
+
+    pub fn resolution(mut self, res: impl Into<String>) -> Self {
+        self.resolution = Some(res.into());
+        self
+    }
+}
+
+/// Request for image editing (image-to-image via /v1/images/edits).
+/// Sent as multipart/form-data.
+pub struct ImageEditRequest {
+    pub prompt: String,
+    pub image_data: Vec<u8>,
+    pub image_filename: String,
+    pub n: Option<u8>,
+    pub aspect_ratio: Option<String>,
+    pub resolution: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImageGenerationResponse {
+    pub data: Vec<GeneratedImage>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GeneratedImage {
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub b64_json: Option<String>,
+}
+
 /// API error body returned by xAI
 #[derive(Debug, Deserialize)]
 pub(crate) struct ApiErrorBody {
